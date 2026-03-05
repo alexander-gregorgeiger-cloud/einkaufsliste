@@ -66,7 +66,7 @@ export default function ListDetail() {
     const statsRef = collection(firestore, 'grocery_users', user.uid, 'itemStats')
     const q = query(statsRef, orderBy('count', 'desc'))
     const unsub = onSnapshot(q, (snap) => {
-      const stats: ItemStat[] = snap.docs.slice(0, 10).map(d => ({
+      const stats: ItemStat[] = snap.docs.slice(0, 20).map(d => ({
         name: d.id,
         count: d.data().count || 0,
       }))
@@ -193,7 +193,7 @@ export default function ListDetail() {
               }`}
             >
               <Zap className="w-4 h-4" />
-              <span>Top 10</span>
+              <span>Top 20</span>
             </button>
           )}
           {checkedItems.length > 0 && (
