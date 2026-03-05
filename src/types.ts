@@ -10,6 +10,7 @@ export interface ShoppingItem {
   listId: string
   name: string
   checked: boolean
+  sortOrder: number
   createdAt: Date
 }
 

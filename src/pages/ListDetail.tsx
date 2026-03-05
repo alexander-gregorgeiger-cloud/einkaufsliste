@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore'
 import { firestore } from '../firebase'
 import { useAuth } from '../AuthContext'
-import { ArrowLeft, Plus, Trash2, Zap, X } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Zap, X, ChevronUp, ChevronDown } from 'lucide-react'
 import type { ShoppingList, ShoppingItem, ItemStat } from '../types'
 
 export default function ListDetail() {
@@ -40,7 +40,7 @@ export default function ListDetail() {
 
     const itemsQuery = query(
       collection(firestore, 'grocery_users', user.uid, 'lists', id, 'items'),
-      orderBy('createdAt', 'asc')
+      orderBy('sortOrder', 'asc')
     )
     const unsubItems = onSnapshot(itemsQuery, (snap) => {
       const data: ShoppingItem[] = snap.docs.map(d => {
@@ -50,6 +50,7 @@ export default function ListDetail() {
           listId: id,
           name: item.name,
           checked: item.checked || false,
+          sortOrder: item.sortOrder ?? item.createdAt?.toMillis?.() ?? Date.now(),
           createdAt: item.createdAt?.toDate() || new Date(),
         }
       })
@@ -92,17 +93,18 @@ export default function ListDetail() {
   async function addItem(name: string) {
     if (!name.trim() || !id || !user) return
     const trimmed = name.trim()
-    // Check if already in list
     if (items.some(i => i.name.toLowerCase() === trimmed.toLowerCase())) return
 
+    // New items get the highest sortOrder + 1
+    const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.sortOrder)) : 0
     await addDoc(collection(firestore, 'grocery_users', user.uid, 'lists', id, 'items'), {
       name: trimmed,
       checked: false,
+      sortOrder: maxOrder + 1,
       createdAt: Timestamp.now(),
     })
     await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id), { updatedAt: Timestamp.now() })
 
-    // Track item frequency
     const statRef = doc(firestore, 'grocery_users', user.uid, 'itemStats', trimmed.toLowerCase())
     const statSnap = await getDoc(statRef)
     if (statSnap.exists()) {
@@ -132,6 +134,25 @@ export default function ListDetail() {
     await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id), { updatedAt: Timestamp.now() })
   }
 
+  async function moveItem(item: ShoppingItem, direction: 'up' | 'down') {
+    if (!user || !id) return
+    const unchecked = items.filter(i => !i.checked).sort((a, b) => a.sortOrder - b.sortOrder)
+    const idx = unchecked.findIndex(i => i.id === item.id)
+    if (idx < 0) return
+
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= unchecked.length) return
+
+    const other = unchecked[swapIdx]
+    // Swap sortOrder values
+    await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id, 'items', item.id), {
+      sortOrder: other.sortOrder,
+    })
+    await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id, 'items', other.id), {
+      sortOrder: item.sortOrder,
+    })
+  }
+
   async function clearChecked() {
     if (!user || !id || !confirm('Alle erledigten Artikel entfernen?')) return
     const checked = items.filter(i => i.checked)
@@ -145,7 +166,7 @@ export default function ListDetail() {
     await addItem(name)
   }
 
-  const uncheckedItems = items.filter(i => !i.checked)
+  const uncheckedItems = items.filter(i => !i.checked).sort((a, b) => a.sortOrder - b.sortOrder)
   const checkedItems = items.filter(i => i.checked)
   const currentItemNames = items.map(i => i.name.toLowerCase())
   const availableTopItems = topItems.filter(t => !currentItemNames.includes(t.name))
@@ -248,11 +269,28 @@ export default function ListDetail() {
         <>
           {uncheckedItems.length > 0 && (
             <div className="space-y-1 mb-4">
-              {uncheckedItems.map(item => (
+              {uncheckedItems.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-200 active:scale-[0.99] transition-all"
+                  className="flex items-center gap-2 bg-white rounded-xl px-3 py-3 shadow-sm border border-slate-200 active:scale-[0.99] transition-all"
                 >
+                  {/* Reorder buttons */}
+                  <div className="flex flex-col -my-1">
+                    <button
+                      onClick={() => moveItem(item, 'up')}
+                      disabled={idx === 0}
+                      className="p-0.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => moveItem(item, 'down')}
+                      disabled={idx === uncheckedItems.length - 1}
+                      className="p-0.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
                   <button
                     onClick={() => toggleItem(item)}
                     className="w-6 h-6 rounded-full border-2 border-slate-300 hover:border-primary flex-shrink-0 transition-colors"
