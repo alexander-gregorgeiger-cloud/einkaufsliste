@@ -248,7 +248,7 @@ export default function ListDetail() {
             value={itemName}
             onChange={e => setItemName(e.target.value)}
             placeholder="Artikel hinzufügen..."
-            className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm"
+            className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm"
           />
           <button
             type="submit"
@@ -295,7 +295,7 @@ export default function ListDetail() {
                     onClick={() => toggleItem(item)}
                     className="w-7 h-7 min-w-[28px] rounded-full border-2 border-slate-300 hover:border-primary flex-shrink-0 transition-colors"
                   />
-                  <span className="flex-1 min-w-0 text-slate-800 text-lg truncate">{item.name}</span>
+                  <span className="flex-1 min-w-0 text-slate-800 text-xl truncate">{item.name}</span>
                   <button
                     onClick={() => deleteItem(item.id)}
                     className="p-2.5 text-slate-300 hover:text-red-500 transition-colors flex-shrink-0"
@@ -327,7 +327,7 @@ export default function ListDetail() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </button>
-                    <span className="flex-1 min-w-0 text-slate-400 text-lg line-through truncate">{item.name}</span>
+                    <span className="flex-1 min-w-0 text-slate-400 text-xl line-through truncate">{item.name}</span>
                     <button
                       onClick={() => deleteItem(item.id)}
                       className="p-2.5 text-slate-200 hover:text-red-400 transition-colors flex-shrink-0"

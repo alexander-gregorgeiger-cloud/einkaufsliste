@@ -167,7 +167,7 @@ export default function ShoppingLists() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-slate-900 truncate">{list.name}</h3>
+                  <h3 className="text-xl font-semibold text-slate-900 truncate">{list.name}</h3>
                   <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
                     <span>{list.checkedCount ?? 0}/{list.itemCount ?? 0} erledigt</span>
                     <span>{formatDate(list.updatedAt)}</span>
