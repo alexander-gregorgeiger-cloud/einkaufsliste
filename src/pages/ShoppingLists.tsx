@@ -176,12 +176,29 @@ export default function ShoppingLists() {
 
       {/* Daily Recipe */}
       <div className="mb-5 relative bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 rounded-2xl border border-emerald-200 overflow-hidden">
-        {/* Squirrel decoration */}
-        <svg className="absolute top-3 right-3 w-10 h-10 text-emerald-200 opacity-60" viewBox="0 0 64 64" fill="currentColor">
-          <path d="M48 14c-2-4-6-6-10-6-2 0-4 1-5 2-1-2-3-3-5-3-4 0-7 3-7 7 0 1 0 2 .5 3C16 19 12 24 12 30c0 4 2 7 5 9l-1 6c0 2 1 4 3 5l4 2c2 1 4 0 5-2l1-3 3 1c1 0 2 0 3-1l2-3c1 1 3 2 5 2 4 0 7-3 7-7v-2c3-2 5-6 5-10 0-5-3-9-6-13zM36 44c-2 0-3-1-3-3s1-3 3-3 3 1 3 3-1 3-3 3zm6-16c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2zm-4-4c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"/>
-        </svg>
-        <svg className="absolute bottom-2 left-2 w-7 h-7 text-emerald-200 opacity-40 rotate-45" viewBox="0 0 64 64" fill="currentColor">
-          <path d="M32 8C18 8 8 18 8 32c0 6 2 11 6 16l-2 8 8-2c5 4 10 6 16 6 14 0 24-10 24-24S46 8 32 8zm-4 12c1 0 2 .5 3 1.5l4 6 4-6c1-1 2-1.5 3-1.5 2 0 3 1 3 3 0 .5-.2 1-.5 1.5L38 34l7 9c.3.5.5 1 .5 1.5 0 2-1 3-3 3-1 0-2-.5-3-1.5l-4-6-4 6c-1 1-2 1.5-3 1.5-2 0-3-1-3-3 0-.5.2-1 .5-1.5l7-9-7-9c-.3-.5-.5-1-.5-1.5 0-2 1-3 3-3z"/>
+        {/* Squirrel decoration — sitting with bushy tail */}
+        <svg className="absolute top-2 right-2 w-14 h-14 text-emerald-300 opacity-50" viewBox="0 0 100 100" fill="currentColor">
+          {/* Bushy tail */}
+          <path d="M62 20 C72 8, 88 6, 90 18 C92 28, 84 32, 78 36 C74 38, 70 36, 68 34 C66 32, 64 28, 62 20Z"/>
+          {/* Body */}
+          <ellipse cx="58" cy="58" rx="14" ry="18"/>
+          {/* Head */}
+          <circle cx="50" cy="36" r="11"/>
+          {/* Ear left */}
+          <ellipse cx="44" cy="26" rx="3" ry="5" transform="rotate(-15 44 26)"/>
+          {/* Ear right */}
+          <ellipse cx="56" cy="26" rx="3" ry="5" transform="rotate(15 56 26)"/>
+          {/* Eye */}
+          <circle cx="47" cy="34" r="2" fill="#f0fdf4"/>
+          {/* Nose */}
+          <circle cx="42" cy="38" r="1.5" fill="#f0fdf4"/>
+          {/* Front paws */}
+          <ellipse cx="48" cy="68" rx="5" ry="3"/>
+          {/* Back foot */}
+          <ellipse cx="66" cy="74" rx="7" ry="3"/>
+          {/* Acorn in paws */}
+          <circle cx="44" cy="64" r="3" fill="#f0fdf4" opacity="0.6"/>
+          <path d="M41 62 L47 62 L44 59Z" fill="#f0fdf4" opacity="0.6"/>
         </svg>
 
         <button
