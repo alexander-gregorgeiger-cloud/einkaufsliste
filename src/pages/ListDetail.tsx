@@ -172,7 +172,7 @@ export default function ListDetail() {
   const availableTopItems = topItems.filter(t => !currentItemNames.includes(t.name))
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+    <div className="max-w-2xl mx-auto px-2 sm:px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <button
@@ -240,7 +240,7 @@ export default function ListDetail() {
       )}
 
       {/* Add Item Form — sticky on mobile */}
-      <form onSubmit={handleAddItem} className="sticky top-0 z-10 -mx-4 px-4 pt-1 pb-3 bg-[#f0fdf4]/95 backdrop-blur-sm">
+      <form onSubmit={handleAddItem} className="sticky top-0 z-10 -mx-2 sm:-mx-4 px-2 sm:px-4 pt-1 pb-3 bg-[#f0fdf4]/95 backdrop-blur-sm">
         <div className="flex gap-2">
           <input
             ref={inputRef}

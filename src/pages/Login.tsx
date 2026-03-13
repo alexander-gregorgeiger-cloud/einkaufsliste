@@ -37,8 +37,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center px-4 bg-gradient-to-b from-green-50 to-white">
-      <div className="w-full max-w-sm">
+    <div className="min-h-dvh flex items-center justify-center px-3 sm:px-4 bg-gradient-to-b from-green-50 to-white">
+      <div className="w-full max-w-md sm:max-w-sm">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <ShoppingCart className="w-9 h-9 text-white" />

@@ -108,7 +108,7 @@ export default function ShoppingLists() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+    <div className="max-w-2xl mx-auto px-2 sm:px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3 min-w-0">
@@ -262,12 +262,12 @@ export default function ShoppingLists() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {lists.map(list => (
             <div
               key={list.id}
               onClick={() => navigate(`/list/${list.id}`)}
-              className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:border-primary hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
+              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200 hover:border-primary hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
