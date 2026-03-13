@@ -76,31 +76,31 @@ export default function ShoppingLists() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
             <ShoppingCart className="w-6 h-6 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Einkaufsliste</h1>
-            <p className="text-sm text-slate-500">Gemeinsam einkaufen</p>
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">Einkaufsliste</h1>
+            <p className="text-base text-slate-500">Gemeinsam einkaufen</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setShowForm(!showForm)}
-            className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all shadow-lg"
+            className="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all shadow-lg"
           >
             <Plus className="w-5 h-5" />
           </button>
           <button
             onClick={() => signOut(auth)}
-            className="w-10 h-10 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors"
+            className="w-11 h-11 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors"
             title="Abmelden"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -167,8 +167,8 @@ export default function ShoppingLists() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 truncate">{list.name}</h3>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                  <h3 className="text-lg font-semibold text-slate-900 truncate">{list.name}</h3>
+                  <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
                     <span>{list.checkedCount ?? 0}/{list.itemCount ?? 0} erledigt</span>
                     <span>{formatDate(list.updatedAt)}</span>
                   </div>
@@ -184,7 +184,7 @@ export default function ShoppingLists() {
                 </div>
                 <button
                   onClick={e => deleteList(e, list.id)}
-                  className="ml-3 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  className="ml-2 p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

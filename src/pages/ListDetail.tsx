@@ -172,12 +172,12 @@ export default function ListDetail() {
   const availableTopItems = topItems.filter(t => !currentItemNames.includes(t.name))
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors"
+          className="flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors min-h-[44px]"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Listen</span>
@@ -186,32 +186,32 @@ export default function ListDetail() {
           {topItems.length > 0 && (
             <button
               onClick={() => setShowTopItems(!showTopItems)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+              className={`flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3 py-2 text-sm rounded-lg transition-colors ${
                 showTopItems
                   ? 'bg-amber-100 text-amber-700 border border-amber-200'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               <Zap className="w-4 h-4" />
-              <span>Top 20</span>
+              <span className="hidden sm:inline">Top 20</span>
             </button>
           )}
           {checkedItems.length > 0 && (
             <button
               onClick={clearChecked}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+              className="flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Erledigt löschen</span>
+              <span className="hidden sm:inline">Erledigt löschen</span>
             </button>
           )}
         </div>
       </div>
 
       {/* List Info */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-slate-900">{list.name}</h1>
-        <p className="text-xs text-slate-400 mt-1">
+      <div className="mb-3">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{list.name}</h1>
+        <p className="text-sm text-slate-400 mt-1">
           {items.length} Artikel &middot; {checkedItems.length} erledigt
         </p>
       </div>
@@ -239,8 +239,8 @@ export default function ListDetail() {
         </div>
       )}
 
-      {/* Add Item Form */}
-      <form onSubmit={handleAddItem} className="mb-6">
+      {/* Add Item Form — sticky on mobile */}
+      <form onSubmit={handleAddItem} className="sticky top-0 z-10 -mx-4 px-4 pt-1 pb-3 bg-[#f0fdf4]/95 backdrop-blur-sm">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -248,7 +248,7 @@ export default function ListDetail() {
             value={itemName}
             onChange={e => setItemName(e.target.value)}
             placeholder="Artikel hinzufügen..."
-            className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm"
+            className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm"
           />
           <button
             type="submit"
@@ -268,37 +268,37 @@ export default function ListDetail() {
       ) : (
         <>
           {uncheckedItems.length > 0 && (
-            <div className="space-y-1 mb-4">
+            <div className="space-y-1.5 mb-4">
               {uncheckedItems.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2 bg-white rounded-xl px-3 py-3 shadow-sm border border-slate-200 active:scale-[0.99] transition-all"
+                  className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl pl-1 pr-1 sm:px-3 py-2 shadow-sm border border-slate-200 active:scale-[0.99] transition-all"
                 >
                   {/* Reorder buttons */}
-                  <div className="flex flex-col -my-1">
+                  <div className="flex flex-col">
                     <button
                       onClick={() => moveItem(item, 'up')}
                       disabled={idx === 0}
-                      className="p-0.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
+                      className="p-1.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
                     >
                       <ChevronUp className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => moveItem(item, 'down')}
                       disabled={idx === uncheckedItems.length - 1}
-                      className="p-0.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
+                      className="p-1.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
                     >
                       <ChevronDown className="w-4 h-4" />
                     </button>
                   </div>
                   <button
                     onClick={() => toggleItem(item)}
-                    className="w-6 h-6 rounded-full border-2 border-slate-300 hover:border-primary flex-shrink-0 transition-colors"
+                    className="w-7 h-7 min-w-[28px] rounded-full border-2 border-slate-300 hover:border-primary flex-shrink-0 transition-colors"
                   />
-                  <span className="flex-1 text-slate-800 text-base">{item.name}</span>
+                  <span className="flex-1 min-w-0 text-slate-800 text-lg truncate">{item.name}</span>
                   <button
                     onClick={() => deleteItem(item.id)}
-                    className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+                    className="p-2.5 text-slate-300 hover:text-red-500 transition-colors flex-shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -310,27 +310,27 @@ export default function ListDetail() {
           {/* Checked Items */}
           {checkedItems.length > 0 && (
             <div>
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-2 px-1">
+              <p className="text-sm text-slate-400 font-medium uppercase tracking-wide mb-2 px-1">
                 Erledigt ({checkedItems.length})
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {checkedItems.map(item => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100"
+                    className="flex items-center gap-2 sm:gap-3 bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100"
                   >
                     <button
                       onClick={() => toggleItem(item)}
-                      className="w-6 h-6 rounded-full bg-primary border-2 border-primary flex-shrink-0 flex items-center justify-center transition-colors"
+                      className="w-7 h-7 min-w-[28px] rounded-full bg-primary border-2 border-primary flex-shrink-0 flex items-center justify-center transition-colors"
                     >
                       <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </button>
-                    <span className="flex-1 text-slate-400 text-base line-through">{item.name}</span>
+                    <span className="flex-1 min-w-0 text-slate-400 text-lg line-through truncate">{item.name}</span>
                     <button
                       onClick={() => deleteItem(item.id)}
-                      className="p-1.5 text-slate-200 hover:text-red-400 transition-colors"
+                      className="p-2.5 text-slate-200 hover:text-red-400 transition-colors flex-shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
