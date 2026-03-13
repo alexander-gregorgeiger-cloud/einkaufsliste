@@ -4,8 +4,9 @@ import { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, getDocs
 import { signOut } from 'firebase/auth'
 import { firestore, auth } from '../firebase'
 import { useAuth } from '../AuthContext'
-import { Plus, ShoppingCart, Trash2, ShoppingBag, LogOut } from 'lucide-react'
+import { Plus, ShoppingCart, Trash2, ShoppingBag, LogOut, ChefHat, Clock, Users, ShoppingBasket, ChevronDown, ChevronUp } from 'lucide-react'
 import type { ShoppingList } from '../types'
+import { getRecipeOfTheDay } from '../recipes'
 
 export default function ShoppingLists() {
   const [showForm, setShowForm] = useState(false)
@@ -62,6 +63,37 @@ export default function ShoppingLists() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Fehler beim Erstellen'
       setError(message)
+    }
+  }
+
+  const [recipeExpanded, setRecipeExpanded] = useState(false)
+  const [recipeLoading, setRecipeLoading] = useState(false)
+  const recipe = getRecipeOfTheDay()
+
+  async function createListFromRecipe() {
+    if (!user || recipeLoading) return
+    setRecipeLoading(true)
+    try {
+      const now = Timestamp.now()
+      const docRef = await addDoc(collection(firestore, 'grocery_users', user.uid, 'lists'), {
+        name: recipe.name,
+        createdAt: now,
+        updatedAt: now,
+      })
+      for (let i = 0; i < recipe.ingredients.length; i++) {
+        await addDoc(collection(firestore, 'grocery_users', user.uid, 'lists', docRef.id, 'items'), {
+          name: recipe.ingredients[i],
+          checked: false,
+          sortOrder: i + 1,
+          createdAt: now,
+        })
+      }
+      navigate(`/list/${docRef.id}`)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Erstellen'
+      setError(message)
+    } finally {
+      setRecipeLoading(false)
     }
   }
 
@@ -141,6 +173,53 @@ export default function ShoppingLists() {
           </div>
         </form>
       )}
+
+      {/* Daily Recipe */}
+      <div className="mb-5 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border border-orange-200 overflow-hidden">
+        <button
+          onClick={() => setRecipeExpanded(!recipeExpanded)}
+          className="w-full text-left p-4 flex items-start gap-3"
+        >
+          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+            <ChefHat className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-orange-600 uppercase tracking-wide mb-0.5">Tagesrezept</p>
+            <h3 className="text-lg font-semibold text-slate-900">{recipe.name}</h3>
+            <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{recipe.portions} Portionen</span>
+              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{recipe.minutes} Min</span>
+            </div>
+          </div>
+          <div className="mt-2 text-orange-400">
+            {recipeExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+        </button>
+
+        {recipeExpanded && (
+          <div className="px-4 pb-4">
+            <div className="bg-white/70 rounded-xl p-3 mb-3">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Zutaten</p>
+              <ul className="space-y-1">
+                {recipe.ingredients.map((ing, i) => (
+                  <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
+                    <span className="text-orange-400 mt-0.5">•</span>
+                    {ing}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              onClick={createListFromRecipe}
+              disabled={recipeLoading}
+              className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-medium hover:bg-orange-600 active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              <ShoppingBasket className="w-4 h-4" />
+              {recipeLoading ? 'Wird erstellt...' : 'Zutaten zur Liste hinzufügen'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Lists */}
       {!lists ? (
