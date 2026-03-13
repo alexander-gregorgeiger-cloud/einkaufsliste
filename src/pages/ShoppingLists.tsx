@@ -175,35 +175,43 @@ export default function ShoppingLists() {
       )}
 
       {/* Daily Recipe */}
-      <div className="mb-5 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border border-orange-200 overflow-hidden">
+      <div className="mb-5 relative bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 rounded-2xl border border-emerald-200 overflow-hidden">
+        {/* Squirrel decoration */}
+        <svg className="absolute top-3 right-3 w-10 h-10 text-emerald-200 opacity-60" viewBox="0 0 64 64" fill="currentColor">
+          <path d="M48 14c-2-4-6-6-10-6-2 0-4 1-5 2-1-2-3-3-5-3-4 0-7 3-7 7 0 1 0 2 .5 3C16 19 12 24 12 30c0 4 2 7 5 9l-1 6c0 2 1 4 3 5l4 2c2 1 4 0 5-2l1-3 3 1c1 0 2 0 3-1l2-3c1 1 3 2 5 2 4 0 7-3 7-7v-2c3-2 5-6 5-10 0-5-3-9-6-13zM36 44c-2 0-3-1-3-3s1-3 3-3 3 1 3 3-1 3-3 3zm6-16c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2zm-4-4c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"/>
+        </svg>
+        <svg className="absolute bottom-2 left-2 w-7 h-7 text-emerald-200 opacity-40 rotate-45" viewBox="0 0 64 64" fill="currentColor">
+          <path d="M32 8C18 8 8 18 8 32c0 6 2 11 6 16l-2 8 8-2c5 4 10 6 16 6 14 0 24-10 24-24S46 8 32 8zm-4 12c1 0 2 .5 3 1.5l4 6 4-6c1-1 2-1.5 3-1.5 2 0 3 1 3 3 0 .5-.2 1-.5 1.5L38 34l7 9c.3.5.5 1 .5 1.5 0 2-1 3-3 3-1 0-2-.5-3-1.5l-4-6-4 6c-1 1-2 1.5-3 1.5-2 0-3-1-3-3 0-.5.2-1 .5-1.5l7-9-7-9c-.3-.5-.5-1-.5-1.5 0-2 1-3 3-3z"/>
+        </svg>
+
         <button
           onClick={() => setRecipeExpanded(!recipeExpanded)}
-          className="w-full text-left p-4 flex items-start gap-3"
+          className="w-full text-left p-4 flex items-start gap-3 relative z-10"
         >
-          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
             <ChefHat className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-orange-600 uppercase tracking-wide mb-0.5">Tagesrezept</p>
+            <p className="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-0.5">Tagesrezept</p>
             <h3 className="text-lg font-semibold text-slate-900">{recipe.name}</h3>
             <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{recipe.portions} Portionen</span>
               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{recipe.minutes} Min</span>
             </div>
           </div>
-          <div className="mt-2 text-orange-400">
+          <div className="mt-2 text-emerald-400">
             {recipeExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
         </button>
 
         {recipeExpanded && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 relative z-10">
             <div className="bg-white/70 rounded-xl p-3 mb-3">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Zutaten</p>
               <ul className="space-y-1">
                 {recipe.ingredients.map((ing, i) => (
                   <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
-                    <span className="text-orange-400 mt-0.5">•</span>
+                    <span className="text-emerald-500 mt-0.5">•</span>
                     {ing}
                   </li>
                 ))}
@@ -212,7 +220,7 @@ export default function ShoppingLists() {
             <button
               onClick={createListFromRecipe}
               disabled={recipeLoading}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-medium hover:bg-orange-600 active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl font-medium hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
             >
               <ShoppingBasket className="w-4 h-4" />
               {recipeLoading ? 'Wird erstellt...' : 'Zutaten zur Liste hinzufügen'}
