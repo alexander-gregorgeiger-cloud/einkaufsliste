@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext'
 import Login from './pages/Login'
 import ShoppingLists from './pages/ShoppingLists'
 import ListDetail from './pages/ListDetail'
+import MealPlan from './pages/MealPlan'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -23,6 +24,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<ShoppingLists />} />
       <Route path="/list/:id" element={<ListDetail />} />
+      <Route path="/plan" element={<MealPlan />} />
     </Routes>
   )
 }

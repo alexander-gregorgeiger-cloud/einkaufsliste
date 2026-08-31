@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, getDocs
 import { signOut } from 'firebase/auth'
 import { firestore, auth } from '../firebase'
 import { useAuth } from '../AuthContext'
-import { Plus, ShoppingCart, Trash2, ShoppingBag, LogOut, ChefHat, Clock, Users, ShoppingBasket, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, ShoppingCart, Trash2, ShoppingBag, LogOut, ChefHat, Clock, Users, ShoppingBasket, ChevronDown, ChevronUp, CalendarDays } from 'lucide-react'
 import type { ShoppingList } from '../types'
 import { getRecipeOfTheDay } from '../recipes'
 
@@ -121,6 +121,13 @@ export default function ShoppingLists() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => navigate('/plan')}
+            className="w-11 h-11 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors"
+            title="Wochenplan"
+          >
+            <CalendarDays className="w-5 h-5" />
+          </button>
           <button
             onClick={() => setShowForm(!showForm)}
             className="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all shadow-lg"
