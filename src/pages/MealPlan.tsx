@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc,
-  Timestamp, writeBatch,
+  collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc,
+  doc, getDocs, Timestamp, writeBatch,
 } from 'firebase/firestore'
 import { firestore } from '../firebase'
 import { useAuth } from '../AuthContext'
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Plus, Trash2, X, ShoppingBasket,
-  ChefHat, CalendarDays, Check,
+  ChefHat, CalendarDays, Check, ListChecks,
 } from 'lucide-react'
-import type { Meal, MealSlot } from '../types'
+import type { Meal, MealSlot, ShoppingList } from '../types'
 import recipes from '../recipes'
 
 const SLOTS: { key: MealSlot; label: string }[] = [
@@ -33,6 +33,7 @@ export default function MealPlan() {
 
   const [openMealId, setOpenMealId] = useState<string | null>(null)
   const [shopSource, setShopSource] = useState<'week' | string | null>(null)
+  const [recentLists, setRecentLists] = useState<ShoppingList[]>([])
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const weekEnd = days[6]
@@ -64,6 +65,31 @@ export default function MealPlan() {
     })
     return unsub
   }, [user, weekStart])
+
+  // Shopping lists touched in the last 5 days — offered as targets to append to.
+  // Range + orderBy on the same field needs no composite index.
+  useEffect(() => {
+    if (!user) return
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 5)
+    const q = query(
+      collection(firestore, 'grocery_users', user.uid, 'lists'),
+      where('updatedAt', '>=', Timestamp.fromDate(cutoff)),
+      orderBy('updatedAt', 'desc'),
+    )
+    const unsub = onSnapshot(q, (snap) => {
+      setRecentLists(snap.docs.map(d => {
+        const l = d.data()
+        return {
+          id: d.id,
+          name: l.name,
+          createdAt: l.createdAt?.toDate() || new Date(),
+          updatedAt: l.updatedAt?.toDate() || new Date(),
+        }
+      }))
+    }, (err) => console.error('Firestore error:', err))
+    return unsub
+  }, [user])
 
   const openMeal = meals.find(m => m.id === openMealId) || null
 
@@ -127,19 +153,40 @@ export default function MealPlan() {
     ? `Wocheneinkauf ${formatShort(weekStart)}–${formatShort(weekEnd)}`
     : meals.find(m => m.id === shopSource)?.name || 'Einkauf'
 
-  async function createList(listName: string, names: string[]) {
+  /** `target` is either 'new' or the id of an existing list to append to. */
+  async function saveToList(target: string, listName: string, names: string[]) {
     if (!user || names.length === 0) return
     const now = Timestamp.now()
-    const listRef = doc(collection(firestore, 'grocery_users', user.uid, 'lists'))
     const batch = writeBatch(firestore)
-    batch.set(listRef, { name: listName, createdAt: now, updatedAt: now })
-    names.forEach((name, i) => {
-      const itemRef = doc(collection(firestore, 'grocery_users', user.uid, 'lists', listRef.id, 'items'))
-      batch.set(itemRef, { name, checked: false, sortOrder: i + 1, createdAt: now })
-    })
+    const listsRef = collection(firestore, 'grocery_users', user.uid, 'lists')
+    let listId: string
+
+    if (target === 'new') {
+      const listRef = doc(listsRef)
+      listId = listRef.id
+      batch.set(listRef, { name: listName, createdAt: now, updatedAt: now })
+      names.forEach((name, i) => {
+        batch.set(doc(collection(listsRef, listId, 'items')), {
+          name, checked: false, sortOrder: i + 1, createdAt: now,
+        })
+      })
+    } else {
+      listId = target
+      const itemsRef = collection(listsRef, listId, 'items')
+      const existing = await getDocs(itemsRef)
+      // Skip ingredients already on the list, and append after the last item.
+      const known = new Set(existing.docs.map(d => String(d.data().name || '').trim().toLowerCase()))
+      let order = existing.docs.reduce((max, d) => Math.max(max, d.data().sortOrder ?? 0), 0)
+      for (const name of names) {
+        if (known.has(name.toLowerCase())) continue
+        batch.set(doc(itemsRef), { name, checked: false, sortOrder: ++order, createdAt: now })
+      }
+      batch.update(doc(listsRef, listId), { updatedAt: now })
+    }
+
     await batch.commit()
     setShopSource(null)
-    navigate(`/list/${listRef.id}`)
+    navigate(`/list/${listId}`)
   }
 
   const plannedCount = meals.filter(m => m.ingredients.length > 0).length
@@ -314,8 +361,9 @@ export default function MealPlan() {
           entries={shopEntries}
           defaultName={shopDefaultName}
           grouped={shopSource === 'week'}
+          lists={recentLists}
           onClose={() => setShopSource(null)}
-          onCreate={createList}
+          onSave={saveToList}
         />
       )}
     </div>
@@ -446,16 +494,18 @@ function MealDetail({ meal, onClose, onSave, onDelete, onShop }: {
   )
 }
 
-function ShopDialog({ entries, defaultName, grouped, onClose, onCreate }: {
+function ShopDialog({ entries, defaultName, grouped, lists, onClose, onSave }: {
   entries: { name: string; from: string }[]
   defaultName: string
   grouped: boolean
+  lists: ShoppingList[]
   onClose: () => void
-  onCreate: (listName: string, names: string[]) => Promise<void>
+  onSave: (target: string, listName: string, names: string[]) => Promise<void>
 }) {
   // Everything starts selected; you untick what you already have at home.
   const [selected, setSelected] = useState<string[]>(() => entries.map(e => e.name))
   const [listName, setListName] = useState(defaultName)
+  const [target, setTarget] = useState('new')
   const [saving, setSaving] = useState(false)
 
   function toggle(name: string) {
@@ -467,7 +517,7 @@ function ShopDialog({ entries, defaultName, grouped, onClose, onCreate }: {
     setSaving(true)
     try {
       // Keep the original ingredient order rather than click order.
-      await onCreate(listName.trim() || defaultName, entries.filter(e => selected.includes(e.name)).map(e => e.name))
+      await onSave(target, listName.trim() || defaultName, entries.filter(e => selected.includes(e.name)).map(e => e.name))
     } finally {
       setSaving(false)
     }
@@ -500,11 +550,39 @@ function ShopDialog({ entries, defaultName, grouped, onClose, onCreate }: {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        <input
-          value={listName}
-          onChange={e => setListName(e.target.value)}
-          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm mb-4"
-        />
+        {lists.length > 0 && (
+          <>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 px-1">
+              Wohin?
+            </p>
+            <div className="space-y-1.5 mb-4">
+              <TargetRow
+                active={target === 'new'}
+                onClick={() => setTarget('new')}
+                icon={<Plus className="w-4 h-4" />}
+                title="Neue Liste"
+              />
+              {lists.map(l => (
+                <TargetRow
+                  key={l.id}
+                  active={target === l.id}
+                  onClick={() => setTarget(l.id)}
+                  icon={<ListChecks className="w-4 h-4" />}
+                  title={l.name}
+                  subtitle={formatShort(l.updatedAt)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {target === 'new' && (
+          <input
+            value={listName}
+            onChange={e => setListName(e.target.value)}
+            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm mb-4"
+          />
+        )}
 
         <p className="text-sm text-slate-500 mb-3 px-1">
           Abgehakt wird eingekauft. Nimm weg, was du schon hast.
@@ -551,10 +629,41 @@ function ShopDialog({ entries, defaultName, grouped, onClose, onCreate }: {
           className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-medium hover:bg-primary-dark active:scale-[0.98] transition-all disabled:opacity-40"
         >
           <ShoppingBasket className="w-5 h-5" />
-          {saving ? 'Wird erstellt...' : `${selected.length} Zutaten in neue Liste`}
+          {saving
+            ? 'Wird gespeichert...'
+            : target === 'new'
+              ? `${selected.length} Zutaten in neue Liste`
+              : `${selected.length} Zutaten hinzufügen`}
         </button>
       </div>
     </div>
+  )
+}
+
+function TargetRow({ active, onClick, icon, title, subtitle }: {
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  title: string
+  subtitle?: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 text-left rounded-xl px-3 py-2.5 border transition-colors ${
+        active ? 'bg-primary/5 border-primary' : 'bg-white border-slate-200 hover:border-slate-300'
+      }`}
+    >
+      <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+        active ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'
+      }`}>
+        {icon}
+      </span>
+      <span className={`flex-1 min-w-0 truncate font-medium ${active ? 'text-slate-900' : 'text-slate-600'}`}>
+        {title}
+      </span>
+      {subtitle && <span className="text-xs text-slate-400 flex-shrink-0">{subtitle}</span>}
+    </button>
   )
 }
 
