@@ -2,11 +2,21 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   doc, collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc,
-  Timestamp, getDoc, setDoc, increment,
+  Timestamp, getDoc, setDoc, increment, writeBatch,
 } from 'firebase/firestore'
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
+import {
+  SortableContext, arrayMove, sortableKeyboardCoordinates,
+  useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { firestore } from '../firebase'
 import { useAuth } from '../AuthContext'
-import { ArrowLeft, Plus, Trash2, Zap, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Zap, X, GripVertical } from 'lucide-react'
 import type { ShoppingList, ShoppingItem, ItemStat } from '../types'
 
 export default function ListDetail() {
@@ -75,6 +85,12 @@ export default function ListDetail() {
     return unsub
   }, [user])
 
+  // A small movement threshold keeps taps on the handle from starting a drag.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
   if (loading) {
     return <div className="max-w-2xl mx-auto px-4 py-6 text-center text-slate-400">Laden...</div>
   }
@@ -134,23 +150,27 @@ export default function ListDetail() {
     await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id), { updatedAt: Timestamp.now() })
   }
 
-  async function moveItem(item: ShoppingItem, direction: 'up' | 'down') {
-    if (!user || !id) return
-    const unchecked = items.filter(i => !i.checked).sort((a, b) => a.sortOrder - b.sortOrder)
-    const idx = unchecked.findIndex(i => i.id === item.id)
-    if (idx < 0) return
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!user || !id || !over || active.id === over.id) return
 
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
-    if (swapIdx < 0 || swapIdx >= unchecked.length) return
+    const oldIndex = uncheckedItems.findIndex(i => i.id === active.id)
+    const newIndex = uncheckedItems.findIndex(i => i.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
 
-    const other = unchecked[swapIdx]
-    // Swap sortOrder values
-    await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id, 'items', item.id), {
-      sortOrder: other.sortOrder,
+    // Renumber unchecked items first, then the checked ones, so sortOrder stays
+    // collision-free once an item gets unchecked again.
+    const ordered = [...arrayMove(uncheckedItems, oldIndex, newIndex), ...checkedItems]
+    const batch = writeBatch(firestore)
+    ordered.forEach((item, idx) => {
+      if (item.sortOrder !== idx + 1) {
+        batch.update(
+          doc(firestore, 'grocery_users', user.uid, 'lists', id, 'items', item.id),
+          { sortOrder: idx + 1 },
+        )
+      }
     })
-    await updateDoc(doc(firestore, 'grocery_users', user.uid, 'lists', id, 'items', other.id), {
-      sortOrder: item.sortOrder,
-    })
+    await batch.commit()
   }
 
   async function clearChecked() {
@@ -268,43 +288,25 @@ export default function ListDetail() {
       ) : (
         <>
           {uncheckedItems.length > 0 && (
-            <div className="space-y-1.5 mb-4">
-              {uncheckedItems.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-1 sm:gap-2 bg-white rounded-xl pl-1 pr-1 sm:px-3 py-2 shadow-sm border border-slate-200 active:scale-[0.99] transition-all"
-                >
-                  {/* Reorder buttons */}
-                  <div className="flex flex-col">
-                    <button
-                      onClick={() => moveItem(item, 'up')}
-                      disabled={idx === 0}
-                      className="p-1.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
-                    >
-                      <ChevronUp className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => moveItem(item, 'down')}
-                      disabled={idx === uncheckedItems.length - 1}
-                      className="p-1.5 text-slate-300 hover:text-primary disabled:opacity-20 transition-colors"
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => toggleItem(item)}
-                    className="w-7 h-7 min-w-[28px] rounded-full border-2 border-slate-300 hover:border-primary flex-shrink-0 transition-colors"
-                  />
-                  <span className="flex-1 min-w-0 text-slate-800 text-2xl truncate">{item.name}</span>
-                  <button
-                    onClick={() => deleteItem(item.id)}
-                    className="p-2.5 text-slate-300 hover:text-red-500 transition-colors flex-shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={uncheckedItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1.5 mb-4">
+                  {uncheckedItems.map(item => (
+                    <SortableItemRow
+                      key={item.id}
+                      item={item}
+                      onToggle={() => toggleItem(item)}
+                      onDelete={() => deleteItem(item.id)}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
 
           {/* Checked Items */}
@@ -341,6 +343,49 @@ export default function ListDetail() {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function SortableItemRow({
+  item,
+  onToggle,
+  onDelete,
+}: {
+  item: ShoppingItem
+  onToggle: () => void
+  onDelete: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center gap-1 sm:gap-2 bg-white rounded-xl pl-1 pr-1 sm:px-3 py-2 border border-slate-200 ${
+        isDragging ? 'shadow-lg opacity-90 z-10 relative' : 'shadow-sm'
+      }`}
+    >
+      {/* touch-none lets the handle start a drag instead of scrolling the page */}
+      <button
+        {...attributes}
+        {...listeners}
+        aria-label="Verschieben"
+        className="p-2.5 text-slate-300 hover:text-primary cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+      >
+        <GripVertical className="w-5 h-5" />
+      </button>
+      <button
+        onClick={onToggle}
+        className="w-7 h-7 min-w-[28px] rounded-full border-2 border-slate-300 hover:border-primary flex-shrink-0 transition-colors"
+      />
+      <span className="flex-1 min-w-0 text-slate-800 text-2xl truncate">{item.name}</span>
+      <button
+        onClick={onDelete}
+        className="p-2.5 text-slate-300 hover:text-red-500 transition-colors flex-shrink-0"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   )
 }
